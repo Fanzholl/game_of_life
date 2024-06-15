@@ -19,7 +19,7 @@ void initializeGridData(int grid[25][80], int size[2]) {
         for (int j = 0; j < size[1]; j++) {
             grid[i][j] = rand() % 2;
         }
-    }
+    }  
 }
 
 void printGrid(int grid[25][80], int size[2]) {
