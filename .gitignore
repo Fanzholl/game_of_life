@@ -1,9 +1,15 @@
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# Игнорировать всю папку .vscode
+.vscode/
+
+# Явное исключение для всех возможных файлов в .vscode - не нужно, если вы игнорируете всю папку
+# !.vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
+# !.vscode/*.code-snippets
+
+# Игнорировать исполняемый файл game_of_life.exe
+game_of_life.exe
 
 # Local History for Visual Studio Code
 .history/
