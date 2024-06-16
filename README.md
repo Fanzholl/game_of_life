@@ -1,4 +1,4 @@
-Реализована "Игра в жизнь" через терминал на языке C в интерактивном режиме с возможностью смены скорости игры и загрузкой стартового поля 80 на 25 символом из файла grid.txt. Возможна безболезненная реализация динамической генерации сетки поля (немного измените функцию initializeGridDataFromFile(), заменив всё, что там есть на генерацию нуля или единицы для каждой из перебираемых клеток при помощи библиотек <time.h> и <stdlib.h>. 
+Реализована "Игра в жизнь" через терминал на языке C в интерактивном режиме с возможностью смены скорости игры и загрузкой стартового поля 80 на 25 символом из файла grid.txt. Предусмотрена безболезненная реализация динамической генерации сетки поля (немного измените функцию initializeGridDataFromFile(), заменив всё, что там есть на генерацию нуля или единицы для каждой из перебираемых клеток при помощи библиотек <time.h> и <stdlib.h>. 
 
 Управление:
 s - ускорить игру на 50ms;
@@ -13,7 +13,7 @@ https://github.com/Fanzholl/game_of_life/assets/58570733/a216ef74-a954-43b7-adfb
 
 ______________________________________________________________________________________________________________________________________________________
 
-The "Game of life" is implemented through a terminal in C in interactive mode with the ability to change the speed of the game and load the starting field 80 by 25 characters from a file grid.txt . A painless implementation of dynamic field grid generation is possible (slightly change the initializeGridDataFromFile() function, replacing everything that is there with generating zero or one for each of the cells being sorted using <time> libraries.h> and <stdlib.h>. 
+The "Game of life" is implemented through a terminal in C in interactive mode with the ability to change the speed of the game and load the starting field 80 by 25 characters from a file grid.txt . A painless implementation of dynamic field grid generation is possible (slightly change the initializeGridDataFromFile() function, replacing everything that is there with generating zero or one for each of the cells being sorted using <time.h> and <stdlib.h> libraries. 
 
 Controls:
 s - speed up the game by 50ms;
