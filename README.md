@@ -23,3 +23,15 @@ q - exit the game and finish the program execution;
 Recommendations for compiling via Makefile: make && ./game_of_life.out or make && ./game_of_life.exe .
 
 Have a nice time of day and have a nice game!
+
+
+Пример кода изменения функции\Example of a function change code (initializeGridDataFromFile(data)):
+```
+void initializeGridData(int grid[25][80], int size[2]) {
+    for (int i = 0; i < size[0]; i++) { // Проходим по каждой строке сетки.
+        for (int j = 0; j < size[1]; j++) { // Проходим по каждому столбцу в текущей строке.
+            grid[i][j] = rand() % 2; // Инициализация каждого элемента сетки случайным значением 0 или 1.
+        }
+    }
+}
+```
