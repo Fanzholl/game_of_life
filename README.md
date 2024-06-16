@@ -20,8 +20,6 @@ s - speed up the game by 50ms;
 f - slow down the game by 50ms;
 q - exit the game and finish the program execution;
 
-https://github.com/Fanzholl/game_of_life/assets/58570733/a216ef74-a954-43b7-adfb-4f1b1648950b
-
 Recommendations for compiling via Makefile: make && ./game_of_life.out or make && ./game_of_life.exe .
 
 Have a nice time of day and have a nice game!
