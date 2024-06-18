@@ -3,29 +3,29 @@ TARGET = game_of_life
 
 # Компилятор и флаги
 CC = gcc
-CFLAGS = -Wall -Wextra -I/usr/local/opt/ncurses/include
-LDFLAGS = -L/usr/local/opt/ncurses/lib -lncurses
+CFLAGS = -Wall -Wextra -pedantic -std=c99
 
-# Файлы проекта
-SRCS = game_of_life.c
+# Флаги для линковки с библиотекой ncurses
+LDFLAGS = -lncurses
+
+# Исходные файлы и объектные файлы
+SRCS = main.c game_of_life.c
 OBJS = $(SRCS:.c=.o)
 
-# Правило по умолчанию
+# Правило для сборки всего проекта
 all: $(TARGET)
 
-# Правило для сборки исполняемого файла
+# Правило для создания исполняемого файла из объектных файлов
 $(TARGET): $(OBJS)
-	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-# Правило для сборки объектных файлов
+# Правило для компиляции исходных файлов в объектные файлы
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Очистка скомпилированных файлов
+# Правило для очистки скомпилированных файлов
 clean:
 	rm -f $(OBJS) $(TARGET)
 
-# Пересборка проекта
-rebuild: clean all
-
-.PHONY: all clean rebuild
+# Указывает, что цели 'all' и 'clean' не являются файлами
+.PHONY: all clean

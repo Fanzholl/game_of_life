@@ -1,123 +1,118 @@
-#include <stdio.h> // Включение стандартной библиотеки ввода-вывода.
-#include <stdlib.h> // Включение стандартной библиотеки для работы с памятью и генерацией случайных чисел.
-#include <time.h> // Включение библиотеки для работы со временем, чтобы использовать текущее время для инициализации генератора случайных чисел.
-#include <ncurses.h> // Включение библиотеки ncurses для работы с интерфейсом в терминале.
+#include "game_of_life.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-void initializeGridDataFromFile(int grid[25][80], const char* filename); // Объявление функции для инициализации сетки из файла.
-void printGrid(int grid[25][80]); // Объявление функции для вывода сетки на экран.
-void calcAlive(int grid[25][80], int nextGrid[25][80]); // Объявление функции для расчета следующего состояния сетки.
-int countAliveNeighbors(int grid[25][80], int x, int y); // Объявление функции для подсчета живых соседей клетки.
-void copyGrid(int dest[25][80], int src[25][80]); // Объявление функции для копирования содержимого одной сетки в другую.
-
-int main(void) { // Главная функция программы.
-    int grid[25][80]; // Инициализация массива сетки поля.
-    int nextGrid[25][80]; // Инициализация массива сетки следующего шага эволюции игрового поля.
-    int delay = 500; // Начальная задержка в миллисекундах (скорость игры).
-    const char* filename = "grid.txt"; // Имя файла с начальным состоянием сетки.
-
-    initializeGridDataFromFile(grid, filename); // Инициализация сетки из файла.
-
-    initscr(); // Инициализация ncurses.
-    if (stdscr == NULL) { // Проверка успешности инициализации ncurses.
-        fprintf(stderr, "Error initializing ncurses.\n"); // Вывод ошибки и завершение программы, если инициализация не удалась.
-        return 1; // Завершение программы с кодом ошибки.
-    }
-
-    cbreak(); // Включение режима cbreak для немедленной передачи символов.
-    noecho(); // Отключение отображения вводимых символов.
-    curs_set(FALSE); // Скрытие курсора.
-    timeout(0); // Установка неблокирующего ввода.
-    keypad(stdscr, TRUE); // Включение режима работы с функциональными клавишами.
-
-    while (1) { // Бесконечный цикл для продолжения игрового процесса.
-        int ch = getch(); // Чтение символа с клавиатуры.
-        mvprintw(25 + 3, 0, "Key pressed: %d", ch); // Отладочное сообщение для отображения кода нажатой клавиши.
-
-        if (ch == 'q') break; // Выход из цикла при нажатии 'q'.
-        if (ch == 'f') { // Ускорение игры при нажатии 'f'.
-            delay = (delay > 50) ? delay - 50 : delay; // Уменьшение задержки (увеличение скорости).
-            mvprintw(25 + 4, 0, "Speed up, new delay: %d", delay); // Отладочное сообщение для изменения скорости.
+// Функция для инициализации сетки
+void initializeGrid(Grid *grid) {
+    grid->grid = (int**) malloc(ROWS * sizeof(int*)); // Выделение памяти для строк
+    for (int i = 0; i < ROWS; ++i) {
+        grid->grid[i] = (int*) malloc(COLS * sizeof(int)); // Выделение памяти для столбцов в каждой строке
+        for (int j = 0; j < COLS; ++j) {
+            grid->grid[i][j] = 0; // Инициализация всех ячеек нулями
         }
-        if (ch == 's') { // Замедление игры при нажатии 's'.
-            delay = (delay < 2000) ? delay + 50 : delay; // Увеличение задержки (уменьшение скорости).
-            mvprintw(25 + 5, 0, "Slow down, new delay: %d", delay); // Отладочное сообщение для изменения скорости.
-        }
-
-        calcAlive(grid, nextGrid); // Расчет следующего состояния сетки.
-        copyGrid(grid, nextGrid); // Копирование содержимого nextGrid в grid для следующей итерации.
-        clear(); // Очистка экрана.
-        printGrid(grid); // Вывод сетки на экран.
-        refresh(); // Обновление экрана.
-        napms(delay); // Задержка выполнения на заданное количество миллисекунд.
     }
-
-    endwin(); // Завершение ncurses.
-
-    return 0; // Возвращение 0, чтобы указать, что программа завершилась успешно.
 }
 
-void initializeGridDataFromFile(int grid[25][80], const char* filename) {
-    FILE *file = fopen(filename, "r"); // Открытие файла для чтения.
-    if (file == NULL) { // Проверка успешности открытия файла.
-        perror("Error opening file"); // Вывод сообщения об ошибке.
-        exit(EXIT_FAILURE); // Завершение программы с кодом ошибки.
+// Функция для освобождения памяти сетки
+void freeGrid(Grid *grid) {
+    for (int i = 0; i < ROWS; ++i) {
+        free(grid->grid[i]); // Освобождение памяти для каждой строки
+    }
+    free(grid->grid); // Освобождение памяти для указателя на строки
+}
+
+// Функция для инициализации сетки из файла
+void initializeGridDataFromFile(Grid *grid, const char* filename) {
+    FILE *file = fopen(filename, "r"); // Открытие файла для чтения
+    if (!file) {
+        perror("Error opening file"); // Вывод ошибки в случае неудачи
+        exit(EXIT_FAILURE); // Завершение программы с ошибкой
     }
 
-    for (int i = 0; i < 25; i++) { // Проход по каждой строке сетки.
-        for (int j = 0; j < 80; j++) { // Проход по каждому столбцу в текущей строке.
-            int c = fgetc(file); // Чтение символа из файла.
-            if (c == EOF || c == '\n') break; // Выход из цикла при достижении конца файла или конца строки.
-            if (c == '0' || c == '1') { // Проверка, является ли символ '0' или '1'.
-                grid[i][j] = c - '0'; // Преобразование символа в число и присвоение элементу сетки.
+    for (int i = 0; i < ROWS; ++i) {
+        for (int j = 0; j < COLS; ++j) {
+            int c = fgetc(file); // Чтение символа из файла
+            if (c == EOF || c == '\n') break; // Прерывание цикла в случае конца файла или строки
+            if (c == '0' || c == '1') {
+                grid->grid[i][j] = c - '0'; // Преобразование символа в число
             } else {
-                j--; // Если символ не 0 и не 1, игнорируем его.
+                --j; // Повторное чтение в случае неверного символа
             }
         }
-        while (fgetc(file) != '\n' && !feof(file)); // Пропуск оставшихся символов в строке.
+        while (fgetc(file) != '\n' && !feof(file)); // Пропуск оставшихся символов в строке
     }
 
-    fclose(file); // Закрытие файла.
+    fclose(file); // Закрытие файла
 }
 
-void printGrid(int grid[25][80]) {
-    for (int i = 0; i < 25; i++) { // Проход по каждой строке сетки.
-        for (int j = 0; j < 80; j++) { // Проход по каждому столбцу в текущей строке.
-            mvprintw(i, j, "%c", (grid[i][j]) ? 178 : 32); // Вывод символа в зависимости от значения элемента сетки.
+// Функция для вывода сетки на экран
+void printGrid(const Grid *grid) {
+    for (int i = 0; i < ROWS; ++i) {
+        for (int j = 0; j < COLS; ++j) {
+            mvprintw(i, j, "%c", (grid->grid[i][j]) ? 178 : ' '); // Вывод живых клеток как '178', мертвых как пробел
         }
     }
-    mvprintw(25, 0, "Grid printed."); // Отладочное сообщение.
 }
 
-int countAliveNeighbors(int grid[25][80], int x, int y) {
-    int aliveCubs = 0; // Переменная для подсчета живых соседей.
-    for (int i = -1; i <= 1; i++) { // Проход по строкам соседей (сверху, на уровне и снизу от текущей клетки).
-        for (int j = -1; j <= 1; j++) { // Проход по столбцам соседей (слева, на уровне и справа от текущей клетки).
-            if (i == 0 && j == 0) continue; // Пропуск самой клетки, так как она не должна считаться своим соседом.
-            int newX = (x + i + 25) % 25; // Обработка границ для замкнутого поля по оси X (циклический переход).
-            int newY = (y + j + 80) % 80; // Обработка границ для замкнутого поля по оси Y (циклический переход).
-            aliveCubs += grid[newX][newY]; // Увеличение счётчика живых клеток, если соседняя клетка жива.
+// Функция для подсчета живых соседей клетки
+int countAliveNeighbors(const Grid *grid, int x, int y) {
+    int aliveNeighbors = 0;
+    for (int i = -1; i <= 1; ++i) {
+        for (int j = -1; j <= 1; ++j) {
+            if (i == 0 && j == 0) continue; // Пропуск самой клетки
+            int newX = (x + i + ROWS) % ROWS; // Вычисление координат с учетом цикличности
+            int newY = (y + j + COLS) % COLS;
+            aliveNeighbors += grid->grid[newX][newY]; // Подсчет живых соседей
         }
     }
-    return aliveCubs; // Возвращение количества живых соседей.
+    return aliveNeighbors;
 }
 
-void calcAlive(int grid[25][80], int nextGrid[25][80]) {
-    for (int i = 0; i < 25; i++) { // Проход по каждой строке сетки.
-        for (int j = 0; j < 80; j++) { // Проход по каждому столбцу в текущей строке.
-            int aliveCubs = countAliveNeighbors(grid, i, j); // Подсчет количества живых соседей для текущей клетки.
-            if (grid[i][j]) { // Если клетка живая.
-                if (aliveCubs < 2 || aliveCubs > 3) { // Клетка умирает, если у неё меньше 2 или больше 3 живых соседей.
-                    nextGrid[i][j] = 0; // Клетка умирает.
-                } else { // В противном случае клетка остается живой.
-                    nextGrid[i][j] = 1; // Клетка остается живой.
-                }
-            } else { // Если клетка мертвая.
-                if (aliveCubs == 3) { // Клетка становится живой, если у неё ровно 3 живых соседа.
-                    nextGrid[i][j] = 1; // Клетка оживает.
-                } else { // В противном случае клетка остается мертвой.
-                    nextGrid[i][j] = 0; // Клетка остается мертвой.
-                }
-            }
+// Функция для расчета следующего поколения сетки
+void calcNextGeneration(const Grid *grid, Grid *nextGrid) {
+    for (int i = 0; i < ROWS; ++i) {
+        for (int j = 0; j < COLS; ++j) {
+            int aliveNeighbors = countAliveNeighbors(grid, i, j); // Подсчет живых соседей
+            nextGrid->grid[i][j] = (grid->grid[i][j]) ? (aliveNeighbors == 2 || aliveNeighbors == 3) : (aliveNeighbors == 3); // Правила игры
         }
     }
-    mvprintw(25 + 1, 0, "Grid calculated."); // Отладочное сообщение
+}
+
+// Функция для копирования одной сетки в другую
+void copyGrid(Grid *dest, const Grid *src) {
+    for (int i = 0; i < ROWS; ++i) {
+        for (int j = 0; j < COLS; ++j) {
+            dest->grid[i][j] = src->grid[i][j]; // Копирование значения каждой ячейки
+        }
+    }
+}
+
+// Функция для обработки ввода пользователя
+void handleInput(int *delay, int ch) {
+    switch (ch) {
+        case 'f': // Ускорение игры
+            *delay = (*delay > 50) ? *delay - 50 : *delay;
+            break;
+        case 's': // Замедление игры
+            *delay = (*delay < 2000) ? *delay + 50 : *delay;
+            break;
+    }
+}
+
+// Функция для инициализации ncurses
+void initializeNcurses() {
+    if (initscr() == NULL) {
+        fprintf(stderr, "Error initializing ncurses.\n"); // Вывод ошибки в случае неудачи
+        exit(EXIT_FAILURE);
+    }
+    cbreak(); // Отключение буферизации ввода
+    noecho(); // Отключение отображения вводимых символов
+    curs_set(FALSE); // Скрытие курсора
+    timeout(0); // Неблокирующий ввод
+    keypad(stdscr, TRUE); // Включение функциональных клавиш
+}
+
+// Функция для завершения ncurses
+void finalizeNcurses() {
+    endwin(); // Завершение ncurses
+}
