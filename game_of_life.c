@@ -13,7 +13,7 @@ int main(void) { // Главная функция программы.
     int grid[25][80]; // Инициализация массива сетки поля.
     int nextGrid[25][80]; // Инициализация массива сетки следующего шага эволюции игрового поля.
     int delay = 500; // Начальная задержка в миллисекундах (скорость игры).
-    const char* filename = "grid.txt"; // Имя файла с начальным состоянием сетки.
+    const char* filename = "gun.txt"; // Имя файла с начальным состоянием сетки.
 
     initializeGridDataFromFile(grid, filename); // Инициализация сетки из файла.
 
@@ -44,7 +44,7 @@ int main(void) { // Главная функция программы.
         }
 
         calcAlive(grid, nextGrid); // Расчет следующего состояния сетки.
-        copyGrid(grid, nextGrid); // Копирование содержимого nextGrid в grid для следующей итерации.
+        // copyGrid(grid, nextGrid); // Копирование содержимого nextGrid в grid для следующей итерации.
         clear(); // Очистка экрана.
         printGrid(grid); // Вывод сетки на экран.
         refresh(); // Обновление экрана.
@@ -118,6 +118,8 @@ void calcAlive(int grid[25][80], int nextGrid[25][80]) {
                     nextGrid[i][j] = 0; // Клетка остается мертвой.
                 }
             }
+            grid[i][j] = nextGrid[i][j]; // copy of grid to next iteration;
         }
     }
     mvprintw(25 + 1, 0, "Grid calculated."); // Отладочное сообщение
+}
